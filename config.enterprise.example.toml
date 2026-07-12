@@ -1,0 +1,69 @@
+# token-miser — enterprise/private-cluster HTTP example
+#
+# Minimal shared example for teams routing all tiers to a single private,
+# OpenAI-compatible endpoint (e.g. an internal LLM gateway). Adjust the
+# endpoint, model names, prices, and telemetry paths to your own environment.
+
+[server]
+host = "127.0.0.1"
+port = 8080
+
+[routing]
+tier1_threshold = 2000
+tier2_threshold = 32000
+complexity_keywords = ["architect", "system design", "redesign"]
+
+[providers.tier1_free]
+endpoint = "https://api.enterprise.example.com/llm/v1"
+auth_type = "ApiKey"
+api_key = "${ENTERPRISE_API_KEY}"
+input_cost_per_1m = 0.0
+output_cost_per_1m = 0.0
+[providers.tier1_free.model_mapping]
+default = "qwen-3.6-4b"
+
+[providers.tier2_standard]
+endpoint = "https://api.enterprise.example.com/llm/v1"
+auth_type = "ApiKey"
+api_key = "${ENTERPRISE_API_KEY}"
+input_cost_per_1m = 0.0
+output_cost_per_1m = 0.0
+[providers.tier2_standard.model_mapping]
+default = "qwen-3.6-27b"
+
+[providers.tier3_complex]
+endpoint = "https://api.enterprise.example.com/llm/v1"
+auth_type = "ApiKey"
+api_key = "${ENTERPRISE_API_KEY}"
+input_cost_per_1m = 3.0
+output_cost_per_1m = 15.0
+[providers.tier3_complex.model_mapping]
+default = "qwen-3.6-235b"
+
+[telemetry]
+enabled = true
+shadow_mode = false
+log_path = "telemetry.jsonl"
+
+[semantic_router]
+enabled = true
+endpoint = "https://api.enterprise.example.com/llm/v1"
+model = "qwen3-embedding-8b"
+api_key = "${ENTERPRISE_API_KEY}"
+
+[private_cluster]
+endpoint = "https://api.enterprise.example.com/llm/v1"
+health_check = "/health"
+connect_timeout_seconds = 5
+request_timeout_seconds = 120
+[private_cluster.models]
+intent_classifier = "qwen-3.6-27b"
+standard = "reserved"
+complex = "reserved"
+
+[escalation]
+enabled = true
+max_escalations = 1
+on_empty_response = true
+on_truncation = true
+on_refusal = true

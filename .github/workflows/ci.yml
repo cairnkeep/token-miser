@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
+      - name: Check formatting
+        run: cargo +stable fmt --all -- --check
+      - name: Run tests
+        run: cargo +stable test --locked
+      - name: Run Clippy
+        run: cargo +stable clippy --locked --all-targets --all-features -- -D warnings
+      - name: Verify package
+        run: cargo +stable package --locked
+      - name: Check public surface
+        run: ./scripts/verify-no-private-references.sh
+      - name: Install cargo-audit
+        run: cargo +stable install cargo-audit --locked
+      - name: Audit dependencies
+        run: cargo +stable audit

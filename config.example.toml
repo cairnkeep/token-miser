@@ -1,0 +1,115 @@
+# token-miser — example configuration
+#
+# The headline setup: point an OpenAI-compatible agent (opencode, aider, or any
+# OpenAI client) at this proxy. Easy/medium turns are served by a cheap LOCAL
+# model for $0; only genuinely hard turns spend your paid API key.
+#
+#   Free + Standard tiers  ->  a local model (Ollama / vLLM / LM Studio)   $0
+#   Complex tier           ->  a pay-per-token API (OpenAI, OpenRouter, …)  $$
+#
+# Copy to `config.toml` and edit. Anything `${LIKE_THIS}` is read from the env.
+#
+#   export OPENAI_API_KEY=sk-...
+#   ollama serve && ollama pull qwen2.5-coder:7b && ollama pull qwen2.5-coder:14b
+#   cargo run --release            # then point your client at http://127.0.0.1:8080/v1
+
+[server]
+host = "127.0.0.1"
+port = 8080
+
+[routing]
+# A request is sized by its prompt tokens, then routed:
+#   <= tier1_threshold            -> Free      (tier1_free)
+#   <= tier2_threshold            -> Standard  (tier2_standard)
+#   >  tier2_threshold, or a      -> Complex   (tier3_complex)
+#     complexity keyword matches
+tier1_threshold = 2000
+tier2_threshold = 32000
+complexity_keywords = ["architect", "system design", "redesign"]
+
+# ── Free tier: a small local model. No API key, no cost. ──────────────────────
+[providers.tier1_free]
+endpoint = "http://localhost:11434/v1"        # Ollama's OpenAI-compatible API
+auth_type = "None"
+input_cost_per_1m = 0.0
+output_cost_per_1m = 0.0
+[providers.tier1_free.model_mapping]
+default = "qwen2.5-coder:7b"
+
+# ── Standard tier: a larger local model for the ambiguous middle. ─────────────
+[providers.tier2_standard]
+endpoint = "http://localhost:11434/v1"
+auth_type = "None"
+input_cost_per_1m = 0.0
+output_cost_per_1m = 0.0
+[providers.tier2_standard.model_mapping]
+default = "qwen2.5-coder:14b"
+
+# ── Complex tier: the paid frontier model you're trying to ration. ────────────
+# OpenAI-compatible HTTP API => tool-calling works, so an autonomous agent
+# (opencode) can run its full read/edit/run loop through the proxy.
+# For OpenRouter instead: endpoint = "https://openrouter.ai/api/v1",
+# api_key = "${OPENROUTER_API_KEY}", default = "anthropic/claude-sonnet-4.6".
+[providers.tier3_complex]
+endpoint = "https://api.openai.com/v1"
+auth_type = "ApiKey"
+api_key = "${OPENAI_API_KEY}"
+input_cost_per_1m = 2.50                       # update to your provider's current pricing
+output_cost_per_1m = 10.00
+[providers.tier3_complex.model_mapping]
+default = "gpt-4o"
+
+# ── Telemetry: every routing decision + token/cost estimate is logged. ────────
+# `bench/analyze.py` can read this to show what you saved.
+# Set shadow_mode = true to log decisions WITHOUT changing where requests go —
+# safe way to see the routing split before trusting it with real traffic.
+[telemetry]
+enabled = true
+shadow_mode = false
+log_path = "telemetry.jsonl"
+
+# ── Semantic routing (optional): embedding-based routing for the gray middle. ─
+# Disabled by default to keep first run frictionless. To enable, run a local
+# embedding model (e.g. `ollama pull nomic-embed-text`) and flip enabled = true.
+[semantic_router]
+enabled = false
+endpoint = "http://localhost:11434/v1"
+model = "nomic-embed-text"
+
+# ── Quality-aware escalation: retry a higher tier on a bad/empty answer. ──────
+# Keeps cheap tiers honest — if the local model returns nothing usable, the
+# request is retried up the ladder (at most max_escalations times).
+[escalation]
+enabled = true
+max_escalations = 2
+on_empty_response = true
+on_truncation = true
+on_refusal = true
+
+# Optional LLM judge: score the cheap answer (1-5) and escalate if it's weak.
+# tier = "free" runs the judge on the local model, so judging itself costs $0.
+[escalation.judge]
+enabled = true
+tier = "free"
+min_score = 3
+
+# ── FastContext explorer (optional): cleaned repo context BEFORE routing. ─────
+# When enabled, an upstream FastContext model runs an agentic READ/GLOB/GREP loop
+# (tools executed locally against repo_root) and injects a small, capped bundle
+# of evidence into the request. The router then classifies a short, targeted
+# prompt instead of a sprawling one — which lowers how often requests escalate to
+# the premium tier. FastContext is never a routing target; inference is remote and
+# backend-agnostic (cluster vLLM, local llama-server — any OpenAI-compatible API).
+# Off by default. NOTE: injecting clean context shifts the input-size distribution,
+# so re-tune [routing] thresholds by hand against the telemetry once enabled.
+[fastcontext]
+enabled = false
+endpoint_url = "http://localhost:8081/v1"     # e.g. a llama-server serving the GGUF
+model = "fastcontext-4b-rl"                    # mitkox/FastContext-1.0-4B-RL-Q8_0-GGUF
+# api_key = "${FASTCONTEXT_API_KEY}"          # only if your endpoint needs one
+
+[explore]
+repo_root = "."                                # sandbox root for the local tools
+max_turns = 16                                 # agentic-loop cap; best-effort on cap
+max_expanded_lines = 200                       # keep tight — little, targeted context
+max_expanded_tokens = 4000

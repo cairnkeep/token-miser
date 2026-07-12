@@ -1,0 +1,58 @@
+# Token Miser - .gitignore
+
+# Rust build artifacts
+/target/
+**/*.rs.bk
+*.pdb
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.ai/.env.local
+.ai/env.local
+
+# Local bootstrap and auth state
+.ai/gitlab-cookies*.txt
+.opencode/
+
+# Local-only preserved notes/configs
+.local/**
+!.local/
+!.local/README.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+token-miser.out
+.tm-backend
+
+# Measurement outputs (regenerable via bench/ harness)
+telemetry-*.jsonl
+bench/complex_answers.json
+bench/complex_result.json
+
+# Config backups
+config.local.toml
+config.hybrid-*.toml
+config.live.toml
+config.shadow.toml
+*.toml.backup
+*.bak.*
+config.homelab.toml
+token-miser.service
+
+# AgentFS (local agent memory, not tracked)
+.agentfs/
+graphify-out/

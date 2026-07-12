@@ -1,0 +1,34 @@
+[package]
+name = "token_miser"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "A cost-aware reverse proxy for OpenAI- and Anthropic-compatible LLM traffic"
+license = "Apache-2.0"
+repository = "https://github.com/cairnkeep/token-miser"
+readme = "README.md"
+keywords = ["llm", "proxy", "routing", "openai", "anthropic"]
+categories = ["network-programming", "command-line-utilities"]
+
+[dependencies]
+axum = { version = "0.7", features = ["json"] }
+tokio = { version = "1.0", features = ["full"] }
+tokio-stream = "0.1"
+reqwest = { version = "0.12", features = ["json", "stream"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tiktoken-rs = "0.5"
+toml = "0.8"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.5", features = ["trace"] }
+futures = "0.3"
+async-trait = "0.1"
+thiserror = "1.0"
+dotenvy = "0.15"
+bytes = "1.0"
+dirs = "5.0"
+# Pure-Rust repo exploration tools (GLOB/GREP) for the upstream FastContext stage.
+ignore = "0.4"
+globset = "0.4"
+grep = "0.3"
