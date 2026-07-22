@@ -27,7 +27,7 @@ async-trait = "0.1"
 thiserror = "2.0"
 dotenvy = "0.15"
 bytes = "1.0"
-dirs = "5.0"
+dirs = "6.0"
 # Pure-Rust repo exploration tools (GLOB/GREP) for the upstream FastContext stage.
 ignore = "0.4"
 globset = "0.4"
