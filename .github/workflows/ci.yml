@@ -24,7 +24,9 @@ jobs:
       - name: Verify package
         run: cargo +stable package --locked
       - name: Check public surface
-        run: ./scripts/verify-no-private-references.sh
+        run: |
+          ./scripts/test-public-surface-guard.sh
+          ./scripts/verify-no-private-references.sh
       - name: Install cargo-audit
         run: cargo +stable install cargo-audit --locked
       - name: Audit dependencies
