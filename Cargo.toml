@@ -11,7 +11,7 @@ keywords = ["llm", "proxy", "routing", "openai", "anthropic"]
 categories = ["network-programming", "command-line-utilities"]
 
 [dependencies]
-axum = { version = "0.7", features = ["json"] }
+axum = { version = "0.8", features = ["json"] }
 tokio = { version = "1.0", features = ["full"] }
 tokio-stream = "0.1"
 reqwest = { version = "0.12", features = ["json", "stream"] }
